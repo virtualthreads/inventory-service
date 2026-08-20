@@ -2,6 +2,8 @@ package com.aeropelican.inventoryservice.entity;
 import com.aeropelican.inventoryservice.enums.InventoryStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -34,9 +36,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class InventoryStock {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(
             name = "inventory_id",
             nullable = false,
@@ -44,8 +46,6 @@ public class InventoryStock {
             length = 36
     )
     private UUID inventoryId;
-
-
     /**
      * Product Service owns product_variant_id.
      *

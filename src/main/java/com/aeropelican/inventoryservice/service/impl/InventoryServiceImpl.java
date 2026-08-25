@@ -16,6 +16,7 @@ import com.aeropelican.inventoryservice.repository.InventoryMovementRepository;
 import com.aeropelican.inventoryservice.repository.InventoryStockRepository;
 import com.aeropelican.inventoryservice.service.InventoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,24 +29,54 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryStockRepository inventoryStockRepository;
     private final InventoryMovementRepository inventoryMovementRepository;
 
+    // ============================================================
+    // GET INVENTORY BY VARIANT
+    // ============================================================
+
     @Override
     public InventoryResponseDTO getInventoryByVariantId(Long variantId) {
 
+        log.info(
+                "Fetching inventory for product variant: {}",
+                variantId
+        );
+
         List<InventoryStock> inventoryStocks =
-                inventoryStockRepository.findByProductVariantId(variantId);
+                inventoryStockRepository.findByProductVariantId(
+                        variantId
+                );
 
-        int totalQuantityOnHand = inventoryStocks.stream()
-                .mapToInt(InventoryStock::getQuantityOnHand)
-                .sum();
+        if (inventoryStocks.isEmpty()) {
 
-        int totalQuantityReserved = inventoryStocks.stream()
-                .mapToInt(InventoryStock::getQuantityReserved)
-                .sum();
+            throw new InventoryNotFoundException(
+                    "No inventory found for product variant: "
+                            + variantId
+            );
+        }
+
+        int totalQuantityOnHand =
+                inventoryStocks.stream()
+                        .mapToInt(stock ->
+                                stock.getQuantityOnHand() == null
+                                        ? 0
+                                        : stock.getQuantityOnHand()
+                        )
+                        .sum();
+
+        int totalQuantityReserved =
+                inventoryStocks.stream()
+                        .mapToInt(stock ->
+                                stock.getQuantityReserved() == null
+                                        ? 0
+                                        : stock.getQuantityReserved()
+                        )
+                        .sum();
 
         int totalAvailableQuantity =
                 totalQuantityOnHand - totalQuantityReserved;
@@ -63,27 +94,73 @@ public class InventoryServiceImpl implements InventoryService {
                 .build();
     }
 
+    // ============================================================
+    // CHECK AVAILABILITY
+    // ============================================================
+
     @Override
     public InventoryAvailabilityResponseDTO checkAvailability(
             Long variantId,
             Integer quantity) {
 
-        List<InventoryStock> inventoryStocks =
-                inventoryStockRepository.findByProductVariantId(variantId);
+        log.info(
+                "Checking availability. variantId={}, quantity={}",
+                variantId,
+                quantity
+        );
 
-        int availableQuantity = inventoryStocks.stream()
-                .mapToInt(stock ->
-                        stock.getQuantityOnHand()
-                                - stock.getQuantityReserved())
-                .sum();
+        if (quantity == null || quantity < 1) {
+
+            throw new IllegalArgumentException(
+                    "Quantity must be greater than zero"
+            );
+        }
+
+        List<InventoryStock> inventoryStocks =
+                inventoryStockRepository.findByProductVariantId(
+                        variantId
+                );
+
+        if (inventoryStocks.isEmpty()) {
+
+            throw new InventoryNotFoundException(
+                    "No inventory found for product variant: "
+                            + variantId
+            );
+        }
+
+        int availableQuantity =
+                inventoryStocks.stream()
+                        .mapToInt(stock -> {
+
+                            int onHand =
+                                    stock.getQuantityOnHand() == null
+                                            ? 0
+                                            : stock.getQuantityOnHand();
+
+                            int reserved =
+                                    stock.getQuantityReserved() == null
+                                            ? 0
+                                            : stock.getQuantityReserved();
+
+                            return onHand - reserved;
+                        })
+                        .sum();
+
+        boolean available =
+                availableQuantity >= quantity;
 
         return InventoryAvailabilityResponseDTO.builder()
                 .productVariantId(variantId)
                 .requestedQuantity(quantity)
-                .available(quantity <= availableQuantity)
+                .available(available)
                 .availableQuantity(availableQuantity)
                 .build();
     }
+
+    // ============================================================
+    // SEARCH INVENTORY
+    // ============================================================
 
     @Override
     public Page<InventoryStockResponseDTO> searchInventory(
@@ -93,7 +170,37 @@ public class InventoryServiceImpl implements InventoryService {
             int page,
             int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        log.info(
+                "Searching inventory. variantId={}, locationCode={}, status={}, page={}, size={}",
+                variantId,
+                locationCode,
+                status,
+                page,
+                size
+        );
+
+        if (page < 0) {
+            throw new IllegalArgumentException(
+                    "Page must be greater than or equal to zero"
+            );
+        }
+
+        if (size < 1) {
+            throw new IllegalArgumentException(
+                    "Size must be greater than zero"
+            );
+        }
+
+        if (locationCode != null && locationCode.isBlank()) {
+            locationCode = null;
+        }
+
+        if (status != null && status.isBlank()) {
+            status = null;
+        }
+
+        Pageable pageable =
+                PageRequest.of(page, size);
 
         return inventoryStockRepository
                 .searchInventory(
@@ -105,9 +212,18 @@ public class InventoryServiceImpl implements InventoryService {
                 .map(InventoryMapper::toStockResponse);
     }
 
+    // ============================================================
+    // GET INVENTORY BY ID
+    // ============================================================
+
     @Override
     public InventoryStockResponseDTO getInventoryById(
             UUID inventoryId) {
+
+        log.info(
+                "Fetching inventory by ID: {}",
+                inventoryId
+        );
 
         InventoryStock inventoryStock =
                 inventoryStockRepository.findById(inventoryId)
@@ -118,13 +234,25 @@ public class InventoryServiceImpl implements InventoryService {
                                 )
                         );
 
-        return InventoryMapper.toStockResponse(inventoryStock);
+        return InventoryMapper.toStockResponse(
+                inventoryStock
+        );
     }
+
+    // ============================================================
+    // CREATE INITIAL INVENTORY
+    // ============================================================
 
     @Override
     @Transactional
     public InventoryStockResponseDTO createInventory(
             CreateInventoryRequestDTO request) {
+
+        log.info(
+                "Creating inventory. variantId={}, locationCode={}",
+                request.getProductVariantId(),
+                request.getLocationCode()
+        );
 
         InventoryStock existing =
                 inventoryStockRepository
@@ -135,6 +263,7 @@ public class InventoryServiceImpl implements InventoryService {
                         .orElse(null);
 
         if (existing != null) {
+
             throw new DuplicateInventoryException(
                     "Inventory already exists for product variant "
                             + request.getProductVariantId()
@@ -143,38 +272,73 @@ public class InventoryServiceImpl implements InventoryService {
             );
         }
 
-        InventoryStock inventoryStock = InventoryStock.builder()
-                .inventoryId(UUID.randomUUID())
-                .productVariantId(request.getProductVariantId())
-                .locationCode(request.getLocationCode())
-                .quantityOnHand(request.getQuantityOnHand())
-                .quantityReserved(0)
-                .reorderLevel(
-                        request.getReorderLevel() == null
-                                ? 10
-                                : request.getReorderLevel()
-                )
-                .status(
-                        determineStatus(
-                                request.getQuantityOnHand(),
-                                request.getReorderLevel()
+        int quantityOnHand =
+                request.getQuantityOnHand();
+
+        int reorderLevel =
+                request.getReorderLevel() == null
+                        ? 10
+                        : request.getReorderLevel();
+
+        InventoryStock inventoryStock =
+                InventoryStock.builder()
+                        .inventoryId(UUID.randomUUID())
+                        .productVariantId(
+                                request.getProductVariantId()
                         )
-                )
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+                        .locationCode(
+                                request.getLocationCode()
+                        )
+                        .quantityOnHand(
+                                quantityOnHand
+                        )
+                        .quantityReserved(0)
+                        .reorderLevel(
+                                reorderLevel
+                        )
+                        .status(
+                                determineStatus(
+                                        quantityOnHand,
+                                        reorderLevel
+                                )
+                        )
+                        .createdAt(
+                                LocalDateTime.now()
+                        )
+                        .updatedAt(
+                                LocalDateTime.now()
+                        )
+                        .build();
 
         InventoryStock saved =
-                inventoryStockRepository.save(inventoryStock);
+                inventoryStockRepository.save(
+                        inventoryStock
+                );
 
-        return InventoryMapper.toStockResponse(saved);
+        log.info(
+                "Inventory created successfully. inventoryId={}",
+                saved.getInventoryId()
+        );
+
+        return InventoryMapper.toStockResponse(
+                saved
+        );
     }
+
+    // ============================================================
+    // UPDATE INVENTORY CONFIGURATION
+    // ============================================================
 
     @Override
     @Transactional
     public InventoryStockResponseDTO updateInventory(
             UUID inventoryId,
             UpdateInventoryRequestDTO request) {
+
+        log.info(
+                "Updating inventory configuration. inventoryId={}",
+                inventoryId
+        );
 
         InventoryStock inventoryStock =
                 inventoryStockRepository.findById(inventoryId)
@@ -186,26 +350,53 @@ public class InventoryServiceImpl implements InventoryService {
                         );
 
         if (request.getReorderLevel() != null) {
+
             inventoryStock.setReorderLevel(
                     request.getReorderLevel()
+            );
+
+            /*
+             * Recalculate automatic stock status when
+             * reorder level changes.
+             *
+             * If caller explicitly supplies status,
+             * that status will be applied below.
+             */
+            inventoryStock.setStatus(
+                    determineStatus(
+                            inventoryStock.getQuantityOnHand(),
+                            request.getReorderLevel()
+                    )
             );
         }
 
         if (request.getStatus() != null
                 && !request.getStatus().isBlank()) {
 
+            validateStatus(request.getStatus());
+
             inventoryStock.setStatus(
-                    request.getStatus()
+                    request.getStatus().toUpperCase()
             );
         }
 
-        inventoryStock.setUpdatedAt(LocalDateTime.now());
+        inventoryStock.setUpdatedAt(
+                LocalDateTime.now()
+        );
 
         InventoryStock saved =
-                inventoryStockRepository.save(inventoryStock);
+                inventoryStockRepository.save(
+                        inventoryStock
+                );
 
-        return InventoryMapper.toStockResponse(saved);
+        return InventoryMapper.toStockResponse(
+                saved
+        );
     }
+
+    // ============================================================
+    // ADJUST PHYSICAL STOCK
+    // ============================================================
 
     @Override
     @Transactional
@@ -213,9 +404,17 @@ public class InventoryServiceImpl implements InventoryService {
             UUID inventoryId,
             AdjustInventoryRequestDTO request) {
 
+        log.info(
+                "Adjusting inventory. inventoryId={}, movementType={}, quantity={}",
+                inventoryId,
+                request.getMovementType(),
+                request.getQuantity()
+        );
+
         InventoryStock inventoryStock =
-                inventoryStockRepository
-                        .findById(inventoryId)
+                inventoryStockRepository.findById(
+                                inventoryId
+                        )
                         .orElseThrow(() ->
                                 new InventoryNotFoundException(
                                         "Inventory not found with id: "
@@ -231,9 +430,21 @@ public class InventoryServiceImpl implements InventoryService {
             );
         }
 
-        if (!"ADJUSTMENT_IN".equals(request.getMovementType())
-                && !"ADJUSTMENT_OUT".equals(
-                request.getMovementType())) {
+        if (request.getMovementType() == null
+                || request.getMovementType().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Movement type is required"
+            );
+        }
+
+        String movementType =
+                request.getMovementType()
+                        .trim()
+                        .toUpperCase();
+
+        if (!movementType.equals("ADJUSTMENT_IN")
+                && !movementType.equals("ADJUSTMENT_OUT")) {
 
             throw new IllegalArgumentException(
                     "Movement type must be ADJUSTMENT_IN "
@@ -241,32 +452,58 @@ public class InventoryServiceImpl implements InventoryService {
             );
         }
 
-        if ("ADJUSTMENT_IN".equals(request.getMovementType())) {
+        int currentQuantity =
+                inventoryStock.getQuantityOnHand();
+
+        int currentReserved =
+                inventoryStock.getQuantityReserved();
+
+        int adjustmentQuantity =
+                request.getQuantity();
+
+        // --------------------------------------------------------
+        // ADD STOCK
+        // --------------------------------------------------------
+
+        if (movementType.equals("ADJUSTMENT_IN")) {
 
             inventoryStock.setQuantityOnHand(
-                    inventoryStock.getQuantityOnHand()
-                            + request.getQuantity()
+                    currentQuantity + adjustmentQuantity
             );
+        }
 
-        } else {
+        // --------------------------------------------------------
+        // REMOVE STOCK
+        // --------------------------------------------------------
+
+        else {
 
             int availableQuantity =
-                    inventoryStock.getQuantityOnHand()
-                            - inventoryStock.getQuantityReserved();
+                    currentQuantity - currentReserved;
 
-            if (request.getQuantity() > availableQuantity) {
+            if (adjustmentQuantity > availableQuantity) {
 
                 throw new InsufficientInventoryException(
-                        "Insufficient available stock for adjustment"
+                        "Insufficient available stock for adjustment. "
+                                + "Available: "
+                                + availableQuantity
+                                + ", requested: "
+                                + adjustmentQuantity
                 );
             }
 
             inventoryStock.setQuantityOnHand(
-                    inventoryStock.getQuantityOnHand()
-                            - request.getQuantity()
+                    currentQuantity - adjustmentQuantity
             );
         }
 
+        /*
+         * IMPORTANT:
+         *
+         * quantityReserved is NEVER changed here.
+         *
+         * This API adjusts physical stock only.
+         */
         inventoryStock.setStatus(
                 determineStatus(
                         inventoryStock.getQuantityOnHand(),
@@ -274,53 +511,113 @@ public class InventoryServiceImpl implements InventoryService {
                 )
         );
 
-        inventoryStock.setUpdatedAt(LocalDateTime.now());
+        inventoryStock.setUpdatedAt(
+                LocalDateTime.now()
+        );
 
         InventoryStock saved =
-                inventoryStockRepository.save(inventoryStock);
+                inventoryStockRepository.save(
+                        inventoryStock
+                );
+
+        // --------------------------------------------------------
+        // INSERT APPEND-ONLY MOVEMENT
+        // --------------------------------------------------------
+
+        InventoryMovement.MovementType movementEnum =
+                InventoryMovement.MovementType.valueOf(
+                        movementType
+                );
 
         InventoryMovement movement =
                 InventoryMovement.builder()
                         .movementId(UUID.randomUUID())
                         .productVariantId(
-                                inventoryStock.getProductVariantId()
+                                saved.getProductVariantId()
                         )
                         .locationCode(
-                                inventoryStock.getLocationCode()
+                                saved.getLocationCode()
                         )
                         .movementType(
-                                request.getMovementType()
+                                movementEnum
                         )
-                        .quantity(request.getQuantity())
-                        .referenceType("INVENTORY")
+                        .quantity(
+                                adjustmentQuantity
+                        )
+                        .referenceType(
+                                "INVENTORY"
+                        )
                         .referenceId(
-                                inventoryStock.getInventoryId().toString()
+                                saved.getInventoryId().toString()
                         )
-                        .reason(request.getReason())
-                        .createdAt(LocalDateTime.now())
+                        .reason(
+                                request.getReason()
+                        )
+                        .createdAt(
+                                LocalDateTime.now()
+                        )
                         .build();
 
-        inventoryMovementRepository.save(movement);
+        inventoryMovementRepository.save(
+                movement
+        );
 
-        return InventoryMapper.toStockResponse(saved);
+        log.info(
+                "Inventory adjustment completed. inventoryId={}, movementId={}, quantityOnHand={}",
+                saved.getInventoryId(),
+                movement.getMovementId(),
+                saved.getQuantityOnHand()
+        );
+
+        return InventoryMapper.toStockResponse(
+                saved
+        );
     }
+
+    // ============================================================
+    // DETERMINE STATUS
+    // ============================================================
 
     private String determineStatus(
             Integer quantityOnHand,
             Integer reorderLevel) {
 
-        if (quantityOnHand == null || quantityOnHand <= 0) {
+        if (quantityOnHand == null
+                || quantityOnHand <= 0) {
+
             return "OUT_OF_STOCK";
         }
 
-        int level = reorderLevel == null
-                ? 10
-                : reorderLevel;
+        int level =
+                reorderLevel == null
+                        ? 10
+                        : reorderLevel;
 
         if (quantityOnHand <= level) {
             return "LOW_STOCK";
         }
 
         return "IN_STOCK";
+    }
+
+    // ============================================================
+    // VALIDATE STATUS
+    // ============================================================
+
+    private void validateStatus(String status) {
+
+        String normalizedStatus =
+                status.trim().toUpperCase();
+
+        if (!normalizedStatus.equals("IN_STOCK")
+                && !normalizedStatus.equals("LOW_STOCK")
+                && !normalizedStatus.equals("OUT_OF_STOCK")
+                && !normalizedStatus.equals("INACTIVE")) {
+
+            throw new IllegalArgumentException(
+                    "Invalid inventory status. Allowed values: "
+                            + "IN_STOCK, LOW_STOCK, OUT_OF_STOCK, INACTIVE"
+            );
+        }
     }
 }

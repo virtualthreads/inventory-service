@@ -14,19 +14,22 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateInventoryRequestDTO {
+public class CreateReservationRequestDTO {
 
     @NotNull(message = "Product variant ID is required")
-    @Min(value = 1, message = "Product variant ID must be greater than 0")
     private Long productVariantId;
 
     @NotBlank(message = "Location code is required")
     private String locationCode;
 
-    @NotNull(message = "Quantity on hand is required")
-    @Min(value = 0, message = "Quantity on hand cannot be negative")
-    private Integer quantityOnHand;
+    @NotBlank(message = "Order ID is required")
+    private String orderId;
 
-    @Min(value = 0, message = "Reorder level cannot be negative")
-    private Integer reorderLevel;
+    @NotNull(message = "Quantity is required")
+    @Min(value = 1, message = "Quantity must be at least 1")
+    private Integer quantity;
+
+    @NotNull(message = "Reservation minutes is required")
+    @Min(value = 1, message = "Reservation minutes must be at least 1")
+    private Integer reservationMinutes;
 }

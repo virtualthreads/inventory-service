@@ -13,11 +13,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface InventoryStockRepository extends JpaRepository<InventoryStock, UUID> {
+public interface InventoryStockRepository
+        extends JpaRepository<InventoryStock, UUID> {
 
-    List<InventoryStock> findByProductVariantId(Long productVariantId);
+    List<InventoryStock> findByProductVariantId(
+            Long productVariantId
+    );
 
-    Optional<InventoryStock> findByProductVariantIdAndLocationCode(
+    Optional<InventoryStock>
+    findByProductVariantIdAndLocationCode(
             Long productVariantId,
             String locationCode
     );
@@ -29,9 +33,13 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
             WHERE inventory.productVariantId = :productVariantId
               AND inventory.locationCode = :locationCode
             """)
-    Optional<InventoryStock> findByProductVariantIdAndLocationCodeForUpdate(
-            @Param("productVariantId") Long productVariantId,
-            @Param("locationCode") String locationCode
+    Optional<InventoryStock>
+    findByProductVariantIdAndLocationCodeForUpdate(
+            @Param("productVariantId")
+            Long productVariantId,
+
+            @Param("locationCode")
+            String locationCode
     );
 
     @Query("""
@@ -45,9 +53,15 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
                    OR inventory.status = :status)
             """)
     Page<InventoryStock> searchInventory(
-            @Param("variantId") Long variantId,
-            @Param("locationCode") String locationCode,
-            @Param("status") String status,
+            @Param("variantId")
+            Long variantId,
+
+            @Param("locationCode")
+            String locationCode,
+
+            @Param("status")
+            String status,
+
             Pageable pageable
     );
 }

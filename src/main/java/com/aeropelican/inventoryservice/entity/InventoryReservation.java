@@ -16,17 +16,17 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "inventory_movements")
+@Table(name = "inventory_reservations")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InventoryMovement {
+public class InventoryReservation {
 
     @Id
-    @Column(name = "movement_id", nullable = false, length = 36)
-    private UUID movementId;
+    @Column(name = "reservation_id", nullable = false, length = 36)
+    private UUID reservationId;
 
     @Column(name = "product_variant_id", nullable = false)
     private Long productVariantId;
@@ -34,32 +34,29 @@ public class InventoryMovement {
     @Column(name = "location_code", nullable = false, length = 30)
     private String locationCode;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "movement_type", nullable = false, length = 30)
-    private MovementType movementType;
+    @Column(name = "order_id", nullable = false, length = 100)
+    private String orderId;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "reference_type", length = 30)
-    private String referenceType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private ReservationStatus status;
 
-    @Column(name = "reference_id", length = 100)
-    private String referenceId;
-
-    @Column(name = "reason", length = 255)
-    private String reason;
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public enum MovementType {
-        RECEIPT,
-        ADJUSTMENT_IN,
-        ADJUSTMENT_OUT,
-        RESERVATION,
-        RELEASE,
-        SALE,
-        RETURN
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    public enum ReservationStatus {
+        RESERVED,
+        RELEASED,
+        CONFIRMED,
+        EXPIRED
     }
 }

@@ -7,8 +7,10 @@ import com.aeropelican.inventoryservice.dto.response.InventoryAvailabilityRespon
 import com.aeropelican.inventoryservice.dto.response.InventoryResponseDTO;
 import com.aeropelican.inventoryservice.dto.response.InventoryStockResponseDTO;
 import com.aeropelican.inventoryservice.service.InventoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,8 +24,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     // ============================================================
-    // 1. GET INVENTORY BY PRODUCT VARIANT
-    // GET /api/v1/inventory/variants/{variantId}
+    // GET INVENTORY BY PRODUCT VARIANT
     // ============================================================
 
     @GetMapping("/variants/{variantId}")
@@ -36,14 +37,13 @@ public class InventoryController {
     }
 
     // ============================================================
-    // 2. CHECK INVENTORY AVAILABILITY
-    // GET /api/v1/inventory/variants/{variantId}/availability
+    // CHECK INVENTORY AVAILABILITY
     // ============================================================
 
     @GetMapping("/variants/{variantId}/availability")
     public ResponseEntity<InventoryAvailabilityResponseDTO> checkAvailability(
             @PathVariable Long variantId,
-            @RequestParam(defaultValue = "1") int quantity) {
+            @RequestParam(defaultValue = "1") Integer quantity) {
 
         return ResponseEntity.ok(
                 inventoryService.checkAvailability(
@@ -54,17 +54,24 @@ public class InventoryController {
     }
 
     // ============================================================
-    // 3. SEARCH INVENTORY
-    // GET /api/v1/inventory/stock
+    // SEARCH INVENTORY
     // ============================================================
 
     @GetMapping("/stock")
     public ResponseEntity<Page<InventoryStockResponseDTO>> searchInventory(
             @RequestParam(required = false) Long variantId,
-            @RequestParam(required = false) String locationCode,
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+
+            @RequestParam(required = false)
+            String locationCode,
+
+            @RequestParam(required = false)
+            String status,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size) {
 
         return ResponseEntity.ok(
                 inventoryService.searchInventory(
@@ -78,8 +85,7 @@ public class InventoryController {
     }
 
     // ============================================================
-    // 4. GET INVENTORY BY ID
-    // GET /api/v1/inventory/stock/{inventoryId}
+    // GET INVENTORY BY ID
     // ============================================================
 
     @GetMapping("/stock/{inventoryId}")
@@ -92,28 +98,29 @@ public class InventoryController {
     }
 
     // ============================================================
-    // 5. CREATE INITIAL INVENTORY
-    // POST /api/v1/inventory/stock
+    // CREATE INITIAL INVENTORY
     // ============================================================
 
     @PostMapping("/stock")
     public ResponseEntity<InventoryStockResponseDTO> createInventory(
-            @RequestBody CreateInventoryRequestDTO request) {
+            @Valid @RequestBody CreateInventoryRequestDTO request) {
 
-        return ResponseEntity.ok(
-                inventoryService.createInventory(request)
-        );
+        InventoryStockResponseDTO response =
+                inventoryService.createInventory(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     // ============================================================
-    // 6. UPDATE INVENTORY CONFIGURATION
-    // PATCH /api/v1/inventory/stock/{inventoryId}
+    // UPDATE INVENTORY CONFIGURATION
     // ============================================================
 
     @PatchMapping("/stock/{inventoryId}")
     public ResponseEntity<InventoryStockResponseDTO> updateInventory(
             @PathVariable UUID inventoryId,
-            @RequestBody UpdateInventoryRequestDTO request) {
+            @Valid @RequestBody UpdateInventoryRequestDTO request) {
 
         return ResponseEntity.ok(
                 inventoryService.updateInventory(
@@ -124,14 +131,13 @@ public class InventoryController {
     }
 
     // ============================================================
-    // 7. ADJUST PHYSICAL STOCK
-    // POST /api/v1/inventory/stock/{inventoryId}/adjust
+    // ADJUST PHYSICAL STOCK
     // ============================================================
 
     @PostMapping("/stock/{inventoryId}/adjust")
     public ResponseEntity<InventoryStockResponseDTO> adjustInventory(
             @PathVariable UUID inventoryId,
-            @RequestBody AdjustInventoryRequestDTO request) {
+            @Valid @RequestBody AdjustInventoryRequestDTO request) {
 
         return ResponseEntity.ok(
                 inventoryService.adjustInventory(

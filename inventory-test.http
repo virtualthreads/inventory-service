@@ -1,0 +1,16 @@
+### Create Inventory Stock
+POST http://localhost:8080/api/inventory/stock
+Content-Type: application/json
+
+{
+  "productVariantId": 999,
+  "locationCode": "TEST-WH01",
+  "quantityOnHand": 50,
+  "reorderLevel": 10
+}
+
+### Get Created Stock
+GET http://localhost:8080/api/inventory/stock/1ee4aab9-5481-491e-a983-543a1ecd9c66
+
+### Get All Stock
+GET http://localhost:8080/api/inventory/stock

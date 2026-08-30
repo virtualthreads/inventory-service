@@ -17,7 +17,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class ReservationController {
-
     private final ReservationService reservationService;
 
     @PostMapping

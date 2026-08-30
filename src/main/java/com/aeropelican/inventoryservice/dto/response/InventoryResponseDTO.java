@@ -14,14 +14,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InventoryResponseDTO {
-
     private Long productVariantId;
-
     private Integer totalQuantityOnHand;
-
     private Integer totalQuantityReserved;
-
     private Integer totalAvailableQuantity;
-
     private List<InventoryLocationResponseDTO> locations;
 }

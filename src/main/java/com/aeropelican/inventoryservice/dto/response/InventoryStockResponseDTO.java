@@ -15,24 +15,14 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InventoryStockResponseDTO {
-
     private UUID inventoryId;
-
     private Long productVariantId;
-
     private String locationCode;
-
     private Integer quantityOnHand;
-
     private Integer quantityReserved;
-
     private Integer availableQuantity;
-
     private Integer reorderLevel;
-
     private String status;
-
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 }

@@ -6,16 +6,10 @@ import lombok.Getter;
 @Getter
 @Builder
 public class InventoryLocationResponseDTO {
-
     private String locationCode;
-
     private Integer quantityOnHand;
-
     private Integer quantityReserved;
-
     private Integer availableQuantity;
-
     private Integer reorderLevel;
-
     private String status;
 }

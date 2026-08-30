@@ -16,22 +16,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservationResponseDTO {
-
     private UUID reservationId;
-
     private Long productVariantId;
-
     private String locationCode;
-
     private String orderId;
-
     private Integer quantity;
-
     private ReservationStatus status;
-
     private LocalDateTime expiresAt;
-
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 }

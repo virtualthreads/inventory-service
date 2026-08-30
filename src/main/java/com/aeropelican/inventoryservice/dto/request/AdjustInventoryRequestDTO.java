@@ -22,6 +22,5 @@ public class AdjustInventoryRequestDTO {
 
     @NotBlank(message = "Movement type is required")
     private String movementType;
-
     private String reason;
 }

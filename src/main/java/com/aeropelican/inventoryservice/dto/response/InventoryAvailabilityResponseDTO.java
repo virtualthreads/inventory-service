@@ -12,12 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InventoryAvailabilityResponseDTO {
-
     private Long productVariantId;
-
     private Integer requestedQuantity;
-
     private Boolean available;
-
     private Integer availableQuantity;
 }

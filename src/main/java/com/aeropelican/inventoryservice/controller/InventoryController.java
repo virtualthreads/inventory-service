@@ -23,10 +23,7 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
-    // ============================================================
-    // GET INVENTORY BY PRODUCT VARIANT
-    // ============================================================
-
+    // Get inventory details for a specific product variant
     @GetMapping("/variants/{variantId}")
     public ResponseEntity<InventoryResponseDTO> getInventoryByVariantId(
             @PathVariable Long variantId) {
@@ -36,10 +33,7 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // CHECK INVENTORY AVAILABILITY
-    // ============================================================
-
+    // Check inventory availability for a specific variant
     @GetMapping("/variants/{variantId}/availability")
     public ResponseEntity<InventoryAvailabilityResponseDTO> checkAvailability(
             @PathVariable Long variantId,
@@ -53,10 +47,7 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // SEARCH INVENTORY
-    // ============================================================
-
+    // Search inventory with optional filters and pagination
     @GetMapping("/stock")
     public ResponseEntity<Page<InventoryStockResponseDTO>> searchInventory(
             @RequestParam(required = false) Long variantId,
@@ -84,10 +75,7 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // GET INVENTORY BY ID
-    // ============================================================
-
+    // Get inventory details by inventory ID
     @GetMapping("/stock/{inventoryId}")
     public ResponseEntity<InventoryStockResponseDTO> getInventoryById(
             @PathVariable UUID inventoryId) {
@@ -97,10 +85,7 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // CREATE INITIAL INVENTORY
-    // ============================================================
-
+    // Create new inventory stock
     @PostMapping("/stock")
     public ResponseEntity<InventoryStockResponseDTO> createInventory(
             @Valid @RequestBody CreateInventoryRequestDTO request) {
@@ -113,10 +98,7 @@ public class InventoryController {
                 .body(response);
     }
 
-    // ============================================================
-    // UPDATE INVENTORY CONFIGURATION
-    // ============================================================
-
+    // Update existing inventory stock
     @PatchMapping("/stock/{inventoryId}")
     public ResponseEntity<InventoryStockResponseDTO> updateInventory(
             @PathVariable UUID inventoryId,
@@ -130,10 +112,7 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // ADJUST PHYSICAL STOCK
-    // ============================================================
-
+    // Adjust inventory quantity
     @PostMapping("/stock/{inventoryId}/adjust")
     public ResponseEntity<InventoryStockResponseDTO> adjustInventory(
             @PathVariable UUID inventoryId,

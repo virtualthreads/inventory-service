@@ -23,9 +23,6 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
-    // ============================================================
-    // GET INVENTORY BY PRODUCT VARIANT
-    // ============================================================
 
     @GetMapping("/variants/{variantId}")
     public ResponseEntity<InventoryResponseDTO> getInventoryByVariantId(
@@ -36,9 +33,6 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // CHECK INVENTORY AVAILABILITY
-    // ============================================================
 
     @GetMapping("/variants/{variantId}/availability")
     public ResponseEntity<InventoryAvailabilityResponseDTO> checkAvailability(
@@ -53,9 +47,7 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // SEARCH INVENTORY
-    // ============================================================
+
 
     @GetMapping("/stock")
     public ResponseEntity<Page<InventoryStockResponseDTO>> searchInventory(
@@ -84,9 +76,6 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // GET INVENTORY BY ID
-    // ============================================================
 
     @GetMapping("/stock/{inventoryId}")
     public ResponseEntity<InventoryStockResponseDTO> getInventoryById(
@@ -97,9 +86,7 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // CREATE INITIAL INVENTORY
-    // ============================================================
+
 
     @PostMapping("/stock")
     public ResponseEntity<InventoryStockResponseDTO> createInventory(
@@ -113,9 +100,6 @@ public class InventoryController {
                 .body(response);
     }
 
-    // ============================================================
-    // UPDATE INVENTORY CONFIGURATION
-    // ============================================================
 
     @PatchMapping("/stock/{inventoryId}")
     public ResponseEntity<InventoryStockResponseDTO> updateInventory(
@@ -130,9 +114,7 @@ public class InventoryController {
         );
     }
 
-    // ============================================================
-    // ADJUST PHYSICAL STOCK
-    // ============================================================
+
 
     @PostMapping("/stock/{inventoryId}/adjust")
     public ResponseEntity<InventoryStockResponseDTO> adjustInventory(

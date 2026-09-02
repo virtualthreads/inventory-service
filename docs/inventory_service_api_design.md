@@ -276,17 +276,17 @@ This row lock prevents two concurrent checkout requests from reserving the same 
 ## 8. Recommended HTTP status codes
 
 | Situation                          | Status |
-|------------------------------------|---:|
-| Successful GET                     | 200 |
-| Stock/reservation created          | 201 |
-| Successful PATCH/action            | 200 |
-| Reservation released with no body  | 204 |
-| Invalid request                    | 400 |
-| Authentication missing             | 401 |
-| Permission denied                  | 403 |
-| Variant/inventory not found        | 404 |
-| Insufficient stock / invalid state | 409 |
-| Unexpected server error            | 500 |
+|------------------------------------|-------:|
+| Successful GET                     |    200 |
+| Stock/reservation created          |    201 |
+| Successful PATCH/action            |    200 |
+| Reservation released with no body  |    204 |
+| Invalid request                    |    400 |
+| Authentication missing             |    401 |
+| Permission denied                  |    403 |
+| Variant/inventory not found        |    404 |
+| Insufficient stock / invalid state |    409 |
+| Unexpected server error            |    500 |
 
 ## 9. Suggested Spring Boot package structure
 

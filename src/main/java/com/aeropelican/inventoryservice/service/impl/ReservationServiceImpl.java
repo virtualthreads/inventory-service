@@ -31,9 +31,6 @@ public class ReservationServiceImpl implements ReservationService {
     private final InventoryStockRepository inventoryStockRepository;
     private final InventoryMovementRepository inventoryMovementRepository;
 
-    // =========================================================
-    // CREATE RESERVATION
-    // =========================================================
 
     @Override
     @Transactional
@@ -76,9 +73,7 @@ public class ReservationServiceImpl implements ReservationService {
                             );
                         });
 
-        // ---------------------------------------------------------
-        // Calculate available quantity
-        // ---------------------------------------------------------
+
 
         int quantityOnHand =
                 inventoryStock.getQuantityOnHand();
@@ -94,9 +89,6 @@ public class ReservationServiceImpl implements ReservationService {
                 availableQuantity
         );
 
-        // ---------------------------------------------------------
-        // Validate available stock
-        // ---------------------------------------------------------
 
         if (availableQuantity < request.getQuantity()) {
 
@@ -122,9 +114,6 @@ public class ReservationServiceImpl implements ReservationService {
                         request.getReservationMinutes()
                 );
 
-        // ---------------------------------------------------------
-        // Create reservation
-        // ---------------------------------------------------------
 
         InventoryReservation reservation =
                 InventoryReservation.builder()
@@ -155,11 +144,6 @@ public class ReservationServiceImpl implements ReservationService {
                         )
                         .build();
 
-        // ---------------------------------------------------------
-        // Increase reserved quantity
-        //
-        // quantity_on_hand DOES NOT change here.
-        // ---------------------------------------------------------
 
         inventoryStock.setQuantityReserved(
                 inventoryStock.getQuantityReserved()
@@ -172,18 +156,12 @@ public class ReservationServiceImpl implements ReservationService {
                 inventoryStock
         );
 
-        // ---------------------------------------------------------
-        // Save reservation
-        // ---------------------------------------------------------
 
         InventoryReservation savedReservation =
                 inventoryReservationRepository.save(
                         reservation
                 );
 
-        // ---------------------------------------------------------
-        // Create RESERVATION movement
-        // ---------------------------------------------------------
 
         InventoryMovement movement =
                 InventoryMovement.builder()
@@ -228,9 +206,6 @@ public class ReservationServiceImpl implements ReservationService {
         );
     }
 
-    // =========================================================
-    // GET RESERVATION
-    // =========================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -263,9 +238,6 @@ public class ReservationServiceImpl implements ReservationService {
         );
     }
 
-    // =========================================================
-    // CONFIRM RESERVATION
-    // =========================================================
 
     @Override
     @Transactional
@@ -277,9 +249,6 @@ public class ReservationServiceImpl implements ReservationService {
                 reservationId
         );
 
-        // ---------------------------------------------------------
-        // Find reservation
-        // ---------------------------------------------------------
 
         InventoryReservation reservation =
                 inventoryReservationRepository
@@ -297,10 +266,6 @@ public class ReservationServiceImpl implements ReservationService {
                             );
                         });
 
-        // ---------------------------------------------------------
-        // Validate status
-        // ---------------------------------------------------------
-
         validateReservedStatus(
                 reservation
         );
@@ -308,9 +273,6 @@ public class ReservationServiceImpl implements ReservationService {
         LocalDateTime now =
                 LocalDateTime.now();
 
-        // ---------------------------------------------------------
-        // Check expiration
-        // ---------------------------------------------------------
 
         if (reservation.getExpiresAt() != null
                 && reservation.getExpiresAt().isBefore(now)) {
@@ -320,9 +282,7 @@ public class ReservationServiceImpl implements ReservationService {
             );
         }
 
-        // ---------------------------------------------------------
-        // Lock inventory
-        // ---------------------------------------------------------
+
 
         InventoryStock inventoryStock =
                 inventoryStockRepository
@@ -345,9 +305,7 @@ public class ReservationServiceImpl implements ReservationService {
                             );
                         });
 
-        // ---------------------------------------------------------
-        // Validate reserved quantity
-        // ---------------------------------------------------------
+
 
         if (inventoryStock.getQuantityReserved()
                 < reservation.getQuantity()) {
@@ -357,10 +315,6 @@ public class ReservationServiceImpl implements ReservationService {
             );
         }
 
-        // ---------------------------------------------------------
-        // Validate physical stock
-        // ---------------------------------------------------------
-
         if (inventoryStock.getQuantityOnHand()
                 < reservation.getQuantity()) {
 
@@ -369,17 +323,6 @@ public class ReservationServiceImpl implements ReservationService {
             );
         }
 
-        // ---------------------------------------------------------
-        // Convert reservation to SALE
-        //
-        // quantity_on_hand decreases
-        // quantity_reserved decreases
-        // ---------------------------------------------------------
-
-        inventoryStock.setQuantityOnHand(
-                inventoryStock.getQuantityOnHand()
-                        - reservation.getQuantity()
-        );
 
         inventoryStock.setQuantityReserved(
                 inventoryStock.getQuantityReserved()
@@ -399,10 +342,6 @@ public class ReservationServiceImpl implements ReservationService {
                 inventoryStock
         );
 
-        // ---------------------------------------------------------
-        // Mark reservation CONFIRMED
-        // ---------------------------------------------------------
-
         reservation.setStatus(
                 ReservationStatus.CONFIRMED
         );
@@ -414,9 +353,7 @@ public class ReservationServiceImpl implements ReservationService {
                         reservation
                 );
 
-        // ---------------------------------------------------------
-        // Create SALE movement
-        // ---------------------------------------------------------
+
 
         InventoryMovement movement =
                 InventoryMovement.builder()
@@ -461,9 +398,6 @@ public class ReservationServiceImpl implements ReservationService {
         );
     }
 
-    // =========================================================
-    // RELEASE RESERVATION
-    // =========================================================
 
     @Override
     @Transactional
@@ -474,10 +408,6 @@ public class ReservationServiceImpl implements ReservationService {
                 "Releasing reservation: {}",
                 reservationId
         );
-
-        // ---------------------------------------------------------
-        // Find reservation
-        // ---------------------------------------------------------
 
         InventoryReservation reservation =
                 inventoryReservationRepository
@@ -495,17 +425,11 @@ public class ReservationServiceImpl implements ReservationService {
                             );
                         });
 
-        // ---------------------------------------------------------
-        // Reservation must be RESERVED
-        // ---------------------------------------------------------
 
         validateReservedStatus(
                 reservation
         );
 
-        // ---------------------------------------------------------
-        // Lock inventory
-        // ---------------------------------------------------------
 
         InventoryStock inventoryStock =
                 inventoryStockRepository
@@ -528,9 +452,7 @@ public class ReservationServiceImpl implements ReservationService {
                             );
                         });
 
-        // ---------------------------------------------------------
-        // Validate reserved quantity
-        // ---------------------------------------------------------
+
 
         if (inventoryStock.getQuantityReserved()
                 < reservation.getQuantity()) {
@@ -543,9 +465,6 @@ public class ReservationServiceImpl implements ReservationService {
         LocalDateTime now =
                 LocalDateTime.now();
 
-        // ---------------------------------------------------------
-        // Release reserved quantity
-        // ---------------------------------------------------------
 
         inventoryStock.setQuantityReserved(
                 inventoryStock.getQuantityReserved()
@@ -565,10 +484,6 @@ public class ReservationServiceImpl implements ReservationService {
                 inventoryStock
         );
 
-        // ---------------------------------------------------------
-        // Mark reservation RELEASED
-        // ---------------------------------------------------------
-
         reservation.setStatus(
                 ReservationStatus.RELEASED
         );
@@ -579,9 +494,6 @@ public class ReservationServiceImpl implements ReservationService {
                 reservation
         );
 
-        // ---------------------------------------------------------
-        // Create RELEASE movement
-        // ---------------------------------------------------------
 
         InventoryMovement movement =
                 InventoryMovement.builder()
@@ -622,9 +534,7 @@ public class ReservationServiceImpl implements ReservationService {
         );
     }
 
-    // =========================================================
-    // EXPIRE RESERVATIONS
-    // =========================================================
+
 
     @Override
     @Transactional
@@ -637,9 +547,7 @@ public class ReservationServiceImpl implements ReservationService {
         LocalDateTime now =
                 LocalDateTime.now();
 
-        // ---------------------------------------------------------
-        // Find expired RESERVED reservations
-        // ---------------------------------------------------------
+
 
         List<InventoryReservation> expiredCandidates =
                 inventoryReservationRepository
@@ -651,16 +559,8 @@ public class ReservationServiceImpl implements ReservationService {
         List<ReservationResponseDTO> expiredReservations =
                 new ArrayList<>();
 
-        // ---------------------------------------------------------
-        // Process every expired reservation
-        // ---------------------------------------------------------
-
         for (InventoryReservation reservation :
                 expiredCandidates) {
-
-            // -----------------------------------------------------
-            // Lock inventory row
-            // -----------------------------------------------------
 
             InventoryStock inventoryStock =
                     inventoryStockRepository
@@ -683,9 +583,6 @@ public class ReservationServiceImpl implements ReservationService {
                                 );
                             });
 
-            // -----------------------------------------------------
-            // Validate reserved quantity
-            // -----------------------------------------------------
 
             if (inventoryStock.getQuantityReserved()
                     < reservation.getQuantity()) {
@@ -696,9 +593,6 @@ public class ReservationServiceImpl implements ReservationService {
                 );
             }
 
-            // -----------------------------------------------------
-            // Release reserved quantity
-            // -----------------------------------------------------
 
             inventoryStock.setQuantityReserved(
                     inventoryStock.getQuantityReserved()
@@ -718,10 +612,6 @@ public class ReservationServiceImpl implements ReservationService {
                     inventoryStock
             );
 
-            // -----------------------------------------------------
-            // Mark reservation EXPIRED
-            // -----------------------------------------------------
-
             reservation.setStatus(
                     ReservationStatus.EXPIRED
             );
@@ -732,10 +622,6 @@ public class ReservationServiceImpl implements ReservationService {
                     inventoryReservationRepository.save(
                             reservation
                     );
-
-            // -----------------------------------------------------
-            // Create RELEASE movement
-            // -----------------------------------------------------
 
             InventoryMovement movement =
                     InventoryMovement.builder()
@@ -792,9 +678,6 @@ public class ReservationServiceImpl implements ReservationService {
         return expiredReservations;
     }
 
-    // =========================================================
-    // VALIDATE RESERVATION STATUS
-    // =========================================================
 
     private void validateReservedStatus(
             InventoryReservation reservation) {
@@ -816,9 +699,6 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
-    // =========================================================
-    // ENTITY -> RESPONSE DTO
-    // =========================================================
 
     private ReservationResponseDTO toResponse(
             InventoryReservation reservation) {
@@ -853,11 +733,7 @@ public class ReservationServiceImpl implements ReservationService {
                 )
                 .build();
     }
-
-    // =========================================================
-    // DETERMINE STOCK STATUS
-    // =========================================================
-
+    
     private String determineStatus(
             Integer quantityOnHand,
             Integer reorderLevel) {

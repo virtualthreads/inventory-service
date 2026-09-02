@@ -35,9 +35,6 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryStockRepository inventoryStockRepository;
     private final InventoryMovementRepository inventoryMovementRepository;
 
-    // ============================================================
-    // GET INVENTORY BY VARIANT
-    // ============================================================
 
     @Override
     public InventoryResponseDTO getInventoryByVariantId(Long variantId) {
@@ -93,10 +90,6 @@ public class InventoryServiceImpl implements InventoryService {
                 )
                 .build();
     }
-
-    // ============================================================
-    // CHECK AVAILABILITY
-    // ============================================================
 
     @Override
     public InventoryAvailabilityResponseDTO checkAvailability(
@@ -158,9 +151,6 @@ public class InventoryServiceImpl implements InventoryService {
                 .build();
     }
 
-    // ============================================================
-    // SEARCH INVENTORY
-    // ============================================================
 
     @Override
     public Page<InventoryStockResponseDTO> searchInventory(
@@ -212,9 +202,6 @@ public class InventoryServiceImpl implements InventoryService {
                 .map(InventoryMapper::toStockResponse);
     }
 
-    // ============================================================
-    // GET INVENTORY BY ID
-    // ============================================================
 
     @Override
     public InventoryStockResponseDTO getInventoryById(
@@ -239,9 +226,6 @@ public class InventoryServiceImpl implements InventoryService {
         );
     }
 
-    // ============================================================
-    // CREATE INITIAL INVENTORY
-    // ============================================================
 
     @Override
     @Transactional
@@ -325,9 +309,6 @@ public class InventoryServiceImpl implements InventoryService {
         );
     }
 
-    // ============================================================
-    // UPDATE INVENTORY CONFIGURATION
-    // ============================================================
 
     @Override
     @Transactional
@@ -394,11 +375,7 @@ public class InventoryServiceImpl implements InventoryService {
         );
     }
 
-    // ============================================================
-    // ADJUST PHYSICAL STOCK
-    // ============================================================
 
-    @Override
     @Transactional
     public InventoryStockResponseDTO adjustInventory(
             UUID inventoryId,
@@ -461,20 +438,12 @@ public class InventoryServiceImpl implements InventoryService {
         int adjustmentQuantity =
                 request.getQuantity();
 
-        // --------------------------------------------------------
-        // ADD STOCK
-        // --------------------------------------------------------
-
         if (movementType.equals("ADJUSTMENT_IN")) {
 
             inventoryStock.setQuantityOnHand(
                     currentQuantity + adjustmentQuantity
             );
         }
-
-        // --------------------------------------------------------
-        // REMOVE STOCK
-        // --------------------------------------------------------
 
         else {
 
@@ -520,9 +489,7 @@ public class InventoryServiceImpl implements InventoryService {
                         inventoryStock
                 );
 
-        // --------------------------------------------------------
-        // INSERT APPEND-ONLY MOVEMENT
-        // --------------------------------------------------------
+
 
         InventoryMovement.MovementType movementEnum =
                 InventoryMovement.MovementType.valueOf(
@@ -574,10 +541,6 @@ public class InventoryServiceImpl implements InventoryService {
         );
     }
 
-    // ============================================================
-    // DETERMINE STATUS
-    // ============================================================
-
     private String determineStatus(
             Integer quantityOnHand,
             Integer reorderLevel) {
@@ -600,9 +563,6 @@ public class InventoryServiceImpl implements InventoryService {
         return "IN_STOCK";
     }
 
-    // ============================================================
-    // VALIDATE STATUS
-    // ============================================================
 
     private void validateStatus(String status) {
 

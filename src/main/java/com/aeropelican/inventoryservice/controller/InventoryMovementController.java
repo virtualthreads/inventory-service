@@ -21,30 +21,6 @@ public class InventoryMovementController {
 
     private final InventoryMovementRepository inventoryMovementRepository;
 
-    // =========================================================
-    // GET MOVEMENT HISTORY
-    // =========================================================
-    //
-    // GET /api/v1/inventory/variants/{variantId}/movements
-    //
-    // Query Parameters:
-    // locationCode
-    // movementType
-    // from
-    // to
-    // page
-    // size
-    //
-    // Example:
-    //
-    // GET /api/v1/inventory/variants/3/movements
-    //
-    // GET /api/v1/inventory/variants/3/movements
-    // ?locationCode=BLR-WH01
-    // &movementType=ADJUSTMENT_IN
-    // &page=0
-    // &size=20
-    // =========================================================
 
     @GetMapping("/variants/{variantId}/movements")
     public ResponseEntity<Page<InventoryMovement>> getMovementHistory(
@@ -70,10 +46,6 @@ public class InventoryMovementController {
             int size
     ) {
 
-        // ---------------------------------------------------------
-        // Validate pagination
-        // ---------------------------------------------------------
-
         if (page < 0) {
             throw new IllegalArgumentException(
                     "Page must be greater than or equal to zero"
@@ -86,9 +58,6 @@ public class InventoryMovementController {
             );
         }
 
-        // ---------------------------------------------------------
-        // Create Pageable
-        // ---------------------------------------------------------
 
         Pageable pageable = PageRequest.of(
                 page,
@@ -99,17 +68,11 @@ public class InventoryMovementController {
                 )
         );
 
-        // ---------------------------------------------------------
-        // Get movements for variant
-        // ---------------------------------------------------------
 
         List<InventoryMovement> movements =
                 inventoryMovementRepository
                         .findByProductVariantId(variantId);
 
-        // ---------------------------------------------------------
-        // Filter by location
-        // ---------------------------------------------------------
 
         if (locationCode != null
                 && !locationCode.isBlank()) {
@@ -128,9 +91,6 @@ public class InventoryMovementController {
                     .toList();
         }
 
-        // ---------------------------------------------------------
-        // Filter by movement type
-        // ---------------------------------------------------------
 
         if (movementType != null) {
 
@@ -143,10 +103,6 @@ public class InventoryMovementController {
                     .toList();
         }
 
-        // ---------------------------------------------------------
-        // Filter by FROM date
-        // ---------------------------------------------------------
-
         if (from != null) {
 
             movements = movements.stream()
@@ -158,9 +114,6 @@ public class InventoryMovementController {
                     .toList();
         }
 
-        // ---------------------------------------------------------
-        // Filter by TO date
-        // ---------------------------------------------------------
 
         if (to != null) {
 
@@ -172,10 +125,6 @@ public class InventoryMovementController {
                     )
                     .toList();
         }
-
-        // ---------------------------------------------------------
-        // Sort newest first
-        // ---------------------------------------------------------
 
         movements = movements.stream()
                 .sorted(
@@ -207,9 +156,7 @@ public class InventoryMovementController {
                 )
                 .toList();
 
-        // ---------------------------------------------------------
-        // Manual pagination
-        // ---------------------------------------------------------
+
 
         int start =
                 (int) pageable.getOffset();
@@ -232,9 +179,6 @@ public class InventoryMovementController {
                     movements.subList(start, end);
         }
 
-        // ---------------------------------------------------------
-        // Create Page
-        // ---------------------------------------------------------
 
         Page<InventoryMovement> result =
                 new PageImpl<>(
